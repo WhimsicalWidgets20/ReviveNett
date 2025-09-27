@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ReviveNet – Submit Waste Report</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .camera {
+      position: relative;
+      text-align: center;
+      margin: 1em 0;
+    }
+    #video, #canvas {
+      width: 100%;
+      max-width: 300px;
+      border-radius: 8px;
+      background: #000;
+    }
+    #captureBtn {
+      margin-top: 0.5em;
+      padding: 0.5em 1em;
+      background: #00bcd4;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #captureBtn:hover {
+      background: #0097a7;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="home.html">Home</a>
+    <a href="map.html">Map</a>
+    <a href="filter.html">Filter</a>
+    <a href="status.html">Status</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+
+  <section class="card">
+    <h2>Submit Waste Report</h2>
+    <form id="reportForm">
+      <input type="text" id="repName" placeholder="Your Name" required />
+      <input type="text" id="repPlace" placeholder="Place" required />
+      <input type="text" id="repDistrict" placeholder="District" required />
+      <select id="repCategory" required>
+        <option value="">Select Category</option>
+        <option value="Plastic">Plastic</option>
+        <option value="Organic">Organic</option>
+        <option value="Debris">Debris</option>
+      </select>
+      <textarea
+        id="repDesc"
+        placeholder="Description"
+        rows="3"
+      ></textarea>
+
+      <div class="camera">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+        <button type="button" id="captureBtn">Capture Photo</button>
+      </div>
+
+      <p id="location">Location: fetching…</p>
+      <button type="submit">Submit Report</button>
+    </form>
+  </section>
+
+  <script>
+    (function () {
+      const video = document.getElementById('video');
+      const canvas = document.getElementById('canvas');
+      const captureBtn = document.getElementById('captureBtn');
+      const locationP = document.getElementById('location');
+      let photoData = null;
+      let coords = { lat: null, lon: null };
+
+      // 1. start camera
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode: 'environment' } })
+        .then((stream) => {
+          video.srcObject = stream;
+        })
+        .catch(() => {
+          alert('Camera access denied.');
+        });
+
+      // 2. fetch location on load
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            coords.lat = pos.coords.latitude.toFixed(5);
+            coords.lon = pos.coords.longitude.toFixed(5);
+            locationP.textContent = `Location: ${coords.lat}, ${coords.lon}`;
+          },
+          () => {
+            locationP.textContent = 'Location: unavailable';
+          },
+          { enableHighAccuracy: true }
+        );
+      } else {
+        locationP.textContent = 'Location: not supported';
+      }
+
+      // 3. capture photo
+      captureBtn.addEventListener('click', () => {
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        photoData = canvas.toDataURL('image/jpeg');
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+        captureBtn.textContent = 'Retake Photo';
+      });
+
+      // 4. form submission
+      const reportForm = document.getElementById('reportForm');
+      reportForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!photoData) {
+          alert('Please capture a photo first.');
+          return;
+        }
+        const id = Date.now();
+        const name = document.getElementById('repName').value;
+        const place = document.getElementById('repPlace').value;
+        const district = document.getElementById('repDistrict').value;
+        const category = document.getElementById('repCategory').value;
+        const desc = document.getElementById('repDesc').value;
+
+        // determine priority
+        let priority = 'green';
+        if (category === 'Plastic') priority = 'red';
+        if (category === 'Organic') priority = 'yellow';
+
+        // build report object
+        const report = {
+          id,
+          name,
+          place,
+          district,
+          category,
+          desc,
+          photoUrl: photoData,
+          loc: [coords.lat, coords.lon],
+          priority,
+          status: 'Not Done'
+        };
+
+        // save to localStorage
+        const stored = JSON.parse(localStorage.getItem('reports') || '[]');
+        stored.push(report);
+        localStorage.setItem('reports', JSON.stringify(stored));
+
+        // redirect to map
+        window.location.href = 'map.html';
+      });
+    })();
+  </script>
+</body>
+</html>
