@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ReviveNet – Update Status</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <a href="home.html">Home</a>
+    <a href="map.html">Map</a>
+    <a href="filter.html">Filter</a>
+  <a href="status.html">Status</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+
+  <section class="card">
+    <h2>Update Report Status</h2>
+    <form id="statusForm">
+      <input type="text" id="statusId" placeholder="Report ID" required>
+      <select id="statusVal" required>
+        <option value="">Select Status</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Finished">Finished</option>
+        <option value="Not Done">Not Done</option>
+      </select>
+      <button type="submit">Update</button>
+    </form>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
